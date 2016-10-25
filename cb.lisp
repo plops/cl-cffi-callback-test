@@ -15,7 +15,10 @@
 			       (struct Big ()
 				(decl ((i0 :type uint64_t)
 				       (i1 :type uint64_t))))
-			       (raw "typedef void(*Cb)"))))
+			       (enum CallbackResult
+				     RESULT_OK)
+			       (raw "typedef CallbackResult (*Callback0)(Big big);")
+			       (raw "typedef CallbackResult (*Callback1)(Big *big);"))))
  (with-open-file (s (merge-pathnames "stage/cl-cffi-callback-test/source/wal.c"
 				     (user-homedir-pathname))
 		    :direction :output
@@ -24,9 +27,12 @@
    (emit-cpp :str s :code `(with-compilation-unit
 			       (include "wal.h")
 			     (decl ((big :type "Big" :init (list 1 2))))
-			     (function (run0 ((cb :type "void(*)(Big)"))
+			     (function (run0 ((cb :type "Callback0"))
 					     void)
-				       (funcall cb big))))))
+				       (funcall cb big))
+			     (function (run1 ((cb :type "Callback1"))
+					     void)
+				       (funcall cb &big))))))
 
 (defpackage :f
   (:use :cl :autowrap))

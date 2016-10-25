@@ -10,8 +10,8 @@ CFLAGS=-ggdb -Wall -Wextra -std=gnu11
 
 CC = gcc
 
-libwal.so: wal.c
-	$(CC) -o libwal.so -shared $(CFLAGS) $(HARDENFLAGS)
+../lib/libwal.so: wal.c
+	$(CC) -o ../lib/libwal.so -shared $(CFLAGS) $(HARDENFLAGS)
 
 clean:
-	rm libwal.so
+	rm ../lib/libwal.so
