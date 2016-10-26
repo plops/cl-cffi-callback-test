@@ -11,12 +11,14 @@
 		    :if-does-not-exist :create
 		    :if-exists :supersede)
    (emit-cpp :str s :code `(with-compilation-unit
-			       (include <stddef.h>)
+			       (include <stdint.h>)
 			       (struct Big ()
 				(decl ((i0 :type uint64_t)
 				       (i1 :type uint64_t))))
+			       (raw "typedef struct Big Big;")
 			       (enum CallbackResult
 				     RESULT_OK)
+			       (raw "typedef enum CallbackResult CallbackResult;")
 			       (raw "typedef CallbackResult (*Callback0)(Big big);")
 			       (raw "typedef CallbackResult (*Callback1)(Big *big);"))))
  (with-open-file (s (merge-pathnames "stage/cl-cffi-callback-test/source/wal.c"
@@ -25,7 +27,7 @@
 		    :if-does-not-exist :create
 		    :if-exists :supersede)
    (emit-cpp :str s :code `(with-compilation-unit
-			       (include "wal.h")
+			       (include <wal.h>)
 			     (decl ((big :type "Big" :init (list 1 2))))
 			     (function (run0 ((cb :type "Callback0"))
 					     void)
@@ -39,7 +41,7 @@
 
 (in-package :f)
 (eval-when (:compile-toplevel)
- (c-include "ezono_ngs_api.h"
+  (c-include "ezono_ngs_api.h"
             :spec-path (merge-pathnames "stage/cl-ngs-linux/"
                                         (user-homedir-pathname))
             :exclude-arch ("arm-pc-linux-gnu"
