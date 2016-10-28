@@ -11,16 +11,26 @@
 		    :if-does-not-exist :create
 		    :if-exists :supersede)
    (emit-cpp :str s :code `(with-compilation-unit
-			       (include <stdint.h>)
 			       (struct Big ()
-				(decl ((i0 :type uint64_t)
-				       (i1 :type uint64_t))))
+				(decl ((i0 :type "unsigned long int")
+				       (i1 :type "unsigned long int"))))
 			       (raw "typedef struct Big Big;")
 			       (enum CallbackResult
-				     RESULT_OK)
+				     (RESULT_OK 0)
+				     (RESULT_FAIL (hex #x80000000)))
 			       (raw "typedef enum CallbackResult CallbackResult;")
 			       (raw "typedef CallbackResult (*Callback0)(Big big);")
-			       (raw "typedef CallbackResult (*Callback1)(Big *big);"))))
+			       (raw "typedef CallbackResult (*Callback1)(Big *big);")
+			       (function (make_big ((a :type "unsigned long int")
+						    (b :type "unsigned long int")
+						    )
+						   Big))
+			       (function (run0 ((cb :type Callback0)
+						(big :type Big))
+					       void))
+			       (function (run1 ((cb :type Callback1)
+						(big :type Big*))
+					       void)))))
  (with-open-file (s (merge-pathnames "stage/cl-cffi-callback-test/source/wal.c"
 				     (user-homedir-pathname))
 		    :direction :output
@@ -28,22 +38,37 @@
 		    :if-exists :supersede)
    (emit-cpp :str s :code `(with-compilation-unit
 			       (include <wal.h>)
-			     (decl ((big :type "Big" :init (list 1 2))))
-			     (function (run0 ((cb :type "Callback0"))
-					     void)
-				       (funcall cb big))
-			     (function (run1 ((cb :type "Callback1"))
-					     void)
-				       (funcall cb &big))))))
+			     (with-compilation-unit 
+			      (function (make_big ((a :type "unsigned long int")
+						   (b :type "unsigned long int")
+						   )
+						  Big)
+					(let ((big :type Big :init (list a b)))
+					  (return big)))
+			       (function (run0 ((cb :type Callback0)
+						(big :type Big))
+					       void)
+					 (funcall cb big))
+			       (function (run1 ((cb :type Callback1)
+						(big :type Big*))
+					       void)
+					 (funcall cb big)))))))
 
 (defpackage :f
   (:use :cl :autowrap))
 
+
+
 (in-package :f)
+
+(delete-file (merge-pathnames "stage/cl-cffi-callback-test/wal.x86_64-pc-linux-gnu.spec"
+			      (user-homedir-pathname)))
+
 (eval-when (:compile-toplevel)
-  (c-include "ezono_ngs_api.h"
-            :spec-path (merge-pathnames "stage/cl-ngs-linux/"
-                                        (user-homedir-pathname))
+  (c-include (namestring (merge-pathnames "stage/cl-cffi-callback-test/include/wal.h"
+			       (user-homedir-pathname)))
+            :spec-path (merge-pathnames "stage/cl-cffi-callback-test/"
+			       (user-homedir-pathname))
             :exclude-arch ("arm-pc-linux-gnu"
                            "i386-unknown-freebsd"
                            "i386-unknown-openbsd"
@@ -55,26 +80,19 @@
                            "x86_64-pc-windows-msvc"
                            "x86_64-unknown-freebsd"
                            "x86_64-unknown-openbsd")
-            :exclude-sources ("/usr/include/stdio.h"
-                              "/usr/include/stdlib.h"
-                              "/usr/include/string.h"
-                              "/usr/include/ctype.h"
-                              "/usr/include/zlib.h"
-                              "/usr/include/inttypes.h"
-                              "/usr/include/unistd.h"
-                              "/usr/include/time.h"
-                              "/usr/*"
+            :exclude-sources ("/usr/*"
                               )
-            :include-definitions ("size_t"
-                                  "uint8_t"
-                                  "uint16_t"
-                                  "uint32_t")
-
+            :include-definitions ("uint64_t")
+	    :include-sources ("/usr/include/stdint.h")
             :sysincludes '("/usr/include"
-                           "/home/martin/stage/cl-cffi-callback-test/include"
-                           "/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.3/include")
+                           "/home/martin/stage/cl-cffi-callback-test/include")
             :trace-c2ffi t ))
 
 
 
 
+(cffi:load-foreign-library "lib/libwal.so")
+
+(make-big 1 2)
+
+(run1 )

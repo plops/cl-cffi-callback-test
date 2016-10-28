@@ -1,10 +1,17 @@
 #include <wal.h>
-Big big = {1,2};
+Big make_big(unsigned long int a,unsigned long int b){
+  {
+  Big big = {a,b};
 
-void run0(Callback0 cb){
+  return big;
+}
+
+}
+
+void run0(Callback0 cb,Big big){
   cb(big);
 }
 
-void run1(Callback1 cb){
-  cb(&big);
+void run1(Callback1 cb,Big* big){
+  cb(big);
 }
