@@ -117,9 +117,14 @@
      ,@body
      (free-big ,var)))
 
+(defcallback cb1 callback-result ((b (:pointer big)))
+  (format t "~a~%" (list b (ptr b)))
+  +result-ok+)
+
+
 
 (with-big (s 1 2)
-    (run1 ))
+  (run1 (callback 'cb1) s))
 
 
 
